@@ -5,21 +5,27 @@ import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Label } from "../ui/label";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useNavigate } from "react-router";
 
-const signUpSchema = z.object({
-  firstname: z.string().min(1, "Tên bắt buộc phải có"),
-  lastname: z.string().min(1, "Họ bắt buộc phải có"),
-  username: z.string().min(3, "Tên đăng nhập phải có ít nhất 3 ký tự"),
-  email: z.email("Email không hợp lệ"),
-  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
-});
+const signUpSchema = z
+  .object({
+    username: z.string().min(3, "Tên đăng nhập phải có ít nhất 3 ký tự"),
+    email: z.string().email("Email không hợp lệ"),
+    password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+    confirmPassword: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Mật khẩu không khớp",
+    path: ["confirmPassword"],
+  });
 
 type SignUpFormValues = z.infer<typeof signUpSchema>;
 
-export function SignupForm({ className, ...props }: React.ComponentProps<"div">) {
+export function SignupForm({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   const { signUp } = useAuthStore();
   const navigate = useNavigate();
   const {
@@ -31,141 +37,133 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
   });
 
   const onSubmit = async (data: SignUpFormValues) => {
-    const { firstname, lastname, username, email, password } = data;
-
-    // gọi backend để signup
-    await signUp(username, password, email, firstname, lastname);
-
-    navigate("/signin");
+    const { username, email, password } = data;
+    await signUp(username, email, password);
+    navigate("/");
   };
 
   return (
-    <div
-      className={cn("flex flex-col gap-6", className)}
-      {...props}
-    >
-      <Card className="overflow-hidden p-0 border-border">
-        <CardContent className="grid p-0 md:grid-cols-2">
+    <div className="min-h-screen bg-[#e8ebed] flex items-center justify-center p-5">
+      <Card className="overflow-hidden p-0 border-0 shadow-none max-w-[900px] w-full rounded-none bg-transparent">
+        <CardContent className="grid p-0 md:grid-cols-2 bg-white rounded-[40px] overflow-hidden">
+          {/* Right Side - BookWorm Library Branding */}
+          <div className="bg-black relative hidden md:flex flex-col items-center justify-center p-12 text-white rounded-l-[40px]">
+            <div className="flex flex-col items-center text-center">
+              {/* Logo */}
+              <div className="mb-8">
+                <img
+                  src="/logo.svg"
+                  alt="BookWorm Logo"
+                  className="w-56 h-56 object-contain filter invert"
+                />
+              </div>
+
+              {/* Brand Text */}
+              <h2 className="text-[42px] font-light tracking-tight mb-0 leading-none">
+                Nobita
+              </h2>
+              <p className="text-[14px] tracking-[0.35em] mb-16 mt-1 opacity-90 uppercase font-light">
+                LIBRARY
+              </p>
+
+              <p className="text-[15px] mb-5 opacity-95 font-light">
+                Đã có tài khoản? Đăng nhập ngay.
+              </p>
+
+              <Button
+                variant="outline"
+                className="rounded-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-black px-16 h-[50px] font-medium text-[15px] transition-all uppercase tracking-wide"
+                onClick={() => (window.location.href = "/signin")}
+              >
+                ĐĂNG NHẬP
+              </Button>
+            </div>
+          </div>
+
+          {/* Right Side - Sign Up Form */}
           <form
-            className="p-6 md:p-8"
+            className="p-8 md:px-12 md:py-10 bg-white flex flex-col justify-center relative z-10"
             onSubmit={handleSubmit(onSubmit)}
           >
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4 max-w-[360px] mx-auto w-full">
               {/* header - logo */}
-              <div className="flex flex-col items-center text-center gap-2">
-                <a
-                  href="/"
-                  className="mx-auto block w-fit text-center"
-                >
+              <div className="flex flex-col items-center text-center gap-2 mb-1">
+                <div className="mb-2">
                   <img
                     src="/logo.svg"
-                    alt="logo"
+                    alt="BookWorm Logo"
+                    className="w-24 h-24 object-contain"
                   />
-                </a>
+                </div>
 
-                <h1 className="text-2xl font-bold">Tạo tài khoản Moji</h1>
-                <p className="text-muted-foreground text-balance">
-                  Chào mừng bạn! Hãy đăng ký để bắt đầu!
+                <h1 className="text-[28px] font-normal text-gray-900">
+                  Tạo tài khoản mới !!
+                </h1>
+                <p className="text-gray-600 text-[14px]">
+                  Vui lòng nhập thông tin để đăng ký
                 </p>
               </div>
 
-              {/* họ & tên */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="lastname"
-                    className="block text-sm"
-                  >
-                    Họ
-                  </Label>
-                  <Input
-                    type="text"
-                    id="lastname"
-                    {...register("lastname")}
-                  />
-
-                  {errors.lastname && (
-                    <p className="text-destructive text-sm">
-                      {errors.lastname.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="fistname"
-                    className="block text-sm"
-                  >
-                    Tên
-                  </Label>
-                  <Input
-                    type="text"
-                    id="firstname"
-                    {...register("firstname")}
-                  />
-                  {errors.firstname && (
-                    <p className="text-destructive text-sm">
-                      {errors.firstname.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-
               {/* username */}
-              <div className="flex flex-col gap-3">
-                <Label
-                  htmlFor="username"
-                  className="block text-sm"
-                >
-                  Tên đăng nhập
-                </Label>
+              <div className="flex flex-col gap-1">
                 <Input
                   type="text"
                   id="username"
-                  placeholder="moji"
+                  placeholder="Tên đăng nhập"
+                  className="h-[48px] rounded-full border-gray-300 px-6 text-[14px] focus-visible:ring-1 focus-visible:ring-gray-400 focus-visible:border-gray-400"
                   {...register("username")}
                 />
                 {errors.username && (
-                  <p className="text-destructive text-sm">
+                  <p className="text-red-500 text-xs px-4">
                     {errors.username.message}
                   </p>
                 )}
               </div>
 
               {/* email */}
-              <div className="flex flex-col gap-3">
-                <Label
-                  htmlFor="email"
-                  className="block text-sm"
-                >
-                  Email
-                </Label>
+              <div className="flex flex-col gap-1">
                 <Input
                   type="email"
                   id="email"
-                  placeholder="m@gmail.com"
+                  placeholder="Email"
+                  className="h-[48px] rounded-full border-gray-300 px-6 text-[14px] focus-visible:ring-1 focus-visible:ring-gray-400 focus-visible:border-gray-400"
                   {...register("email")}
                 />
                 {errors.email && (
-                  <p className="text-destructive text-sm">{errors.email.message}</p>
+                  <p className="text-red-500 text-xs px-4">
+                    {errors.email.message}
+                  </p>
                 )}
               </div>
 
               {/* password */}
-              <div className="flex flex-col gap-3">
-                <Label
-                  htmlFor="password"
-                  className="block text-sm"
-                >
-                  Mật khẩu
-                </Label>
+              <div className="flex flex-col gap-1">
                 <Input
                   type="password"
                   id="password"
+                  placeholder="Mật khẩu"
+                  className="h-[48px] rounded-full border-gray-300 px-6 text-[14px] focus-visible:ring-1 focus-visible:ring-gray-400 focus-visible:border-gray-400"
                   {...register("password")}
                 />
                 {errors.password && (
-                  <p className="text-destructive text-sm">
+                  <p className="text-red-500 text-xs px-4">
                     {errors.password.message}
+                  </p>
+                )}
+              </div>
+
+              {/* confirm password */}
+              <div className="flex flex-col gap-1">
+                <Input
+                  type="password"
+                  id="confirmPassword"
+                  placeholder="Xác nhận mật khẩu"
+                  className="h-[48px] rounded-full border-gray-300 px-6 text-[14px] focus-visible:ring-1 focus-visible:ring-gray-400 focus-visible:border-gray-400"
+                  {...register("confirmPassword")}
+                />
+                {errors.confirmPassword && (
+                  <p className="text-red-500 text-xs px-4">
+                    {errors.confirmPassword.message}
                   </p>
                 )}
               </div>
@@ -173,36 +171,15 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
               {/* nút đăng ký */}
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full h-[48px] mt-1 rounded-full bg-black hover:bg-gray-800 text-white font-medium text-[15px] transition-colors uppercase tracking-wide"
                 disabled={isSubmitting}
               >
-                Tạo tài khoản
+                {isSubmitting ? "ĐANG ĐĂNG KÝ..." : "ĐĂNG KÝ"}
               </Button>
-
-              <div className="text-center text-sm">
-                Đã có tài khoản?{" "}
-                <a
-                  href="/signin"
-                  className="underline underline-offset-4"
-                >
-                  Đăng nhập
-                </a>
-              </div>
             </div>
           </form>
-          <div className="bg-muted relative hidden md:block">
-            <img
-              src="/placeholderSignUp.png"
-              alt="Image"
-              className="absolute top-1/2 -translate-y-1/2 object-cover"
-            />
-          </div>
         </CardContent>
       </Card>
-      <div className=" text-xs text-balance px-6 text-center *:[a]:hover:text-primary text-muted-foreground *:[a]:underline *:[a]:underline-offetset-4">
-        Bằng cách tiếp tục, bạn đồng ý với <a href="#">Điều khoản dịch vụ</a> và{" "}
-        <a href="#">Chính sách bảo mật</a> của chúng tôi.
-      </div>
     </div>
   );
 }
